@@ -41,6 +41,11 @@
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-solar-pulse: solar-pulse 6s ease-in-out infinite;
+  --animate-solar-spin: solar-spin 45s linear infinite;
+  --animate-solar-spin-reverse: solar-spin-reverse 35s linear infinite;
+  --animate-ray-shimmer: ray-shimmer 4s ease-in-out infinite;
+  --animate-aurora-glow: aurora-glow 12s ease-in-out infinite alternate;
 
   @keyframes accordion-down {
     from {
@@ -56,6 +61,58 @@
     }
     to {
       height: 0;
+    }
+  }
+  @keyframes solar-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.8;
+      filter: drop-shadow(0 0 30px rgba(245, 158, 11, 0.25));
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 1;
+      filter: drop-shadow(0 0 50px rgba(16, 185, 129, 0.45)) drop-shadow(0 0 80px rgba(245, 158, 11, 0.3));
+    }
+  }
+  @keyframes solar-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes solar-spin-reverse {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
+  @keyframes ray-shimmer {
+    0%, 100% {
+      opacity: 0.4;
+      transform: scale(0.96);
+    }
+    50% {
+      opacity: 0.75;
+      transform: scale(1.04);
+    }
+  }
+  @keyframes aurora-glow {
+    0% {
+      opacity: 0.4;
+      transform: translate(0px, 0px) scale(1);
+    }
+    50% {
+      opacity: 0.65;
+      transform: translate(30px, -20px) scale(1.15);
+    }
+    100% {
+      opacity: 0.5;
+      transform: translate(-20px, 40px) scale(0.9);
     }
   }
 }
@@ -123,4 +180,41 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+.solar-glass-card {
+  background: rgba(8, 10, 18, 0.65);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(251, 191, 36, 0.1);
+  box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.solar-glass-card-green {
+  background: rgba(8, 18, 14, 0.65);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.glow-amber {
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.25);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.25);
+}
+
+@keyframes electron-path-anim {
+  0% {
+    stroke-dashoffset: 100%;
+  }
+  100% {
+    stroke-dashoffset: 0%;
+  }
+}
+
+.electron-flow-line {
+  stroke-dasharray: 20 40;
+  animation: electron-path-anim 15s linear infinite;
+}
+
 

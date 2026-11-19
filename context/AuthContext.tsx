@@ -75,6 +75,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+export function getApiUrl(path: string) {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://monitormyinverter.onrender.com";
+  const cleanedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${cleanedBaseUrl}${cleanedPath}`;
+}
+
+// Rows of recent history kept for the live charts (one row per minute = 4 hours).
+const LIVE_HISTORY_LIMIT = 240;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -88,13 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const router = useRouter();
   const pathname = usePathname();
-
-  const getApiUrl = (path: string) => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://monitormyinverter.onrender.com";
-    const cleanedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-    const cleanedPath = path.startsWith("/") ? path : `/${path}`;
-    return `${cleanedBaseUrl}${cleanedPath}`;
-  };
 
   const setWarningThreshold = (val: number) => {
     if (val === undefined || val === null || isNaN(val)) return;
@@ -178,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       const payload = await res.json();
       setData(payload);
-      fetchHistory(token);
+      fetchHistory({ limit: LIVE_HISTORY_LIMIT }, token);
     } catch (err: any) {
       setError(err.message);
     } finally {

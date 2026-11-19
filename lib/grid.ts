@@ -135,6 +135,78 @@ export function gridCellColor(b: HourBucket): string {
 
 export type GridStatus = "loading" | "ready" | "unavailable" | "error";
 
+/** GET /api/grid/forecast */
+export interface GridForecast {
+  status: "ready" | "learning";
+  generatedAt: string;
+  coverageHours: number;
+  neededHours: number;
+  current: { state: GridState; since: string | null } | null;
+  pattern: {
+    kind: "daily" | "weekly" | "every_n_days" | "rotating" | "cycle" | "none";
+    label: string;
+    periodHours?: number;
+    match?: number;
+    strength?: number;
+  };
+  method: "pattern" | "duration";
+  prediction: { state: GridState; at: string; earliest: string; latest: string; overdue: boolean } | null;
+  thenOn: { at: string; earliest: string; latest: string } | null;
+  upcoming: { state: GridState | "unknown"; start: string; end: string }[];
+  confidence: "high" | "medium" | "low" | "early";
+  accuracy: { medianErrorMinutes: number | null; tested: number };
+  profile: (number | null)[];
+  stats: {
+    hoursPerDayThisWeek: number | null;
+    hoursPerDayLastWeek: number | null;
+    medianOutageMinutes: number | null;
+    medianOnMinutes: number | null;
+    cutsPerDay: number | null;
+  };
+}
+
+/** Polls GET /api/grid/forecast with the browser's time zone. */
+export function useGridForecast(getApiUrl: (path: string) => string, intervalMs = 120_000) {
+  const [forecast, setForecast] = useState<GridForecast | null>(null);
+  const [status, setStatus] = useState<GridStatus>("loading");
+
+  const load = useCallback(async () => {
+    const token = localStorage.getItem("shine_token") || sessionStorage.getItem("shine_token");
+    if (!token) return;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const offset = -new Date().getTimezoneOffset();
+    try {
+      const res = await fetch(
+        getApiUrl(`/api/grid/forecast?tz=${encodeURIComponent(tz)}&tz_offset=${offset}`),
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (res.status === 404) {
+        setStatus("unavailable");
+        return;
+      }
+      if (!res.ok) {
+        setStatus((s) => (s === "ready" ? s : "error"));
+        return;
+      }
+      setForecast(await res.json());
+      setStatus("ready");
+    } catch {
+      setStatus((s) => (s === "ready" ? s : "error"));
+    }
+  }, [getApiUrl]);
+
+  useEffect(() => {
+    const first = setTimeout(load, 0);
+    const id = setInterval(load, intervalMs);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
+  }, [load, intervalMs]);
+
+  return { forecast, status };
+}
+
 /** Polls GET /api/grid. "unavailable" means the backend doesn't have the endpoint yet (404). */
 export function useGridHistory(getApiUrl: (path: string) => string, hours = 24 * 7, intervalMs = 120_000) {
   const [grid, setGrid] = useState<GridResponse | null>(null);

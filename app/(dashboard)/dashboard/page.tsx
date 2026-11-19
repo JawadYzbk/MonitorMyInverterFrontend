@@ -5,7 +5,9 @@ import { getApiUrl, useAuth } from "@/context/AuthContext";
 import { AlertTriangle, BatteryCharging, BatteryMedium, PlugZap, Sun, Gauge, X } from "lucide-react";
 import PowerChart from "@/components/dashboard/PowerChart";
 import { GridDayChart, GridLegend, GridWeekHeatmap } from "@/components/dashboard/GridCharts";
+import GridForecastPanel from "@/components/dashboard/GridForecast";
 import {
+  useGridForecast,
   countOutages,
   formatDuration,
   formatHours,
@@ -81,6 +83,7 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
 export default function DashboardPage() {
   const { data, history, warningThreshold } = useAuth();
   const { grid, status: gridStatus } = useGridHistory(getApiUrl);
+  const { forecast, status: forecastStatus } = useGridForecast(getApiUrl);
   const [alertDismissed, setAlertDismissed] = React.useState(false);
   const [now, setNow] = React.useState(() => new Date());
 
@@ -116,6 +119,9 @@ export default function DashboardPage() {
   const lastChange = grid?.lastChange;
   const sinceText = lastChange
     ? `since ${clock(lastChange)} · ${formatDuration(now.getTime() - Date.parse(lastChange))}`
+    : null;
+  const nextChange = forecast?.prediction && !forecast.prediction.overdue
+    ? `${forecast.prediction.state === "on" ? "back" : "off"} ~${clock(forecast.prediction.at)}`
     : null;
 
   // --- Battery ---
@@ -169,7 +175,7 @@ export default function DashboardPage() {
           value={data ? (gridOn ? "On" : "Off") : "—"}
           detail={
             !data ? "No reading yet"
-              : live ? `${gridVoltage} V${sinceText ? ` · ${sinceText}` : ""}`
+              : live ? `${gridVoltage} V${sinceText ? ` · ${sinceText}` : ""}${nextChange ? ` · ${nextChange}` : ""}`
               : `${gridVoltage} V · not live`
           }
           accent={!live ? "#a1a1aa" : gridOn ? "#38bdf8" : "#f87171"}
@@ -191,6 +197,19 @@ export default function DashboardPage() {
           accent="#a78bfa"
         />
       </div>
+
+      {/* Grid forecast */}
+      <Panel title="Grid forecast">
+        {forecastStatus === "ready" && forecast ? (
+          <GridForecastPanel forecast={forecast} now={now.getTime()} />
+        ) : (
+          <p className="py-6 text-center text-sm text-zinc-400">
+            {forecastStatus === "loading" && "Analysing grid history…"}
+            {forecastStatus === "unavailable" && "The forecast needs the latest backend. Deploy it to see predictions."}
+            {forecastStatus === "error" && "Couldn't load the forecast. It will retry in a moment."}
+          </p>
+        )}
+      </Panel>
 
       {/* Power over time */}
       <Panel title="Power">

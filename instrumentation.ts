@@ -8,8 +8,11 @@ export async function register() {
       return;
     }
 
-    if (process.env.DISABLE_PING_WORKER === "true") {
-      console.log(`[Ping Worker] Disabled via environment variable.`);
+    // Off by default: the backend now stays awake around the clock, and Render's 750 free
+    // hours a month are shared by all free services. Keeping the frontend awake too would
+    // use them up mid-month and suspend everything. Set ENABLE_PING_WORKER=true to turn it on.
+    if (process.env.ENABLE_PING_WORKER !== "true") {
+      console.log(`[Ping Worker] Off (set ENABLE_PING_WORKER=true to keep the frontend awake).`);
       return;
     }
 
